@@ -21,6 +21,7 @@ import {
   Shield,
   Zap,
 } from "lucide-react";
+import { ConnectKitButton } from "connectkit";
 
 const Navbar = () => {
   return (
@@ -77,13 +78,14 @@ const Navbar = () => {
                 Deep insights into cross-chain activities
               </HoverCardContent>
             </HoverCard>
-            <Button
+            {/* <Button
               variant="outline"
               className="flex items-center gap-2 group relative overflow-hidden"
             >
               <Wallet2 className="h-4 w-4 group-hover:rotate-12 transition-transform" />
               Connect Wallet
-            </Button>
+            </Button> */}
+            <ConnectKitButton />
           </div>
         </div>
       </div>
