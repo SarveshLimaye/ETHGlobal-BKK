@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { Button } from "@/components/UI/button";
+import { Button } from "@/components/UI/Button";
 import unifiedBridge from "../../utils/abis/unifiedBridge.json";
+import crossChainPoolAbi from "../../utils/abis/crossChainPoolAbi.json";
 import { ethers } from "ethers";
 
 import {
@@ -14,7 +15,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/UI/card";
+} from "@/components/UI/Card";
 import { Input } from "@/components/UI/input";
 import { Label } from "@/components/UI/label";
 import {
@@ -27,6 +28,7 @@ import {
 import {
   chains,
   checkIfPolygonAggLayer,
+  getPoolAddress,
   SEPOLIA_CHAIN_ID,
   UNIFIED_BRIDGE,
 } from "@/utils/helper";
@@ -100,6 +102,69 @@ export default function Bridge() {
 
       setIsLoading(false);
       setIsBridgeSuccess(true);
+    } else {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+      const signer = provider.getSigner();
+
+      const poolAddress = getPoolAddress(parseInt(sourceChain));
+
+      console.log(poolAddress);
+
+      const erc20Abi = [
+        "function approve(address spender, uint256 amount) external returns (bool)",
+        "function decimals() external view returns (uint8)",
+      ];
+
+      console.log(sourceToken);
+
+      const tokenContract = new ethers.Contract(
+        sourceToken,
+        erc20Abi,
+        provider.getSigner()
+      );
+
+      const tokenDecimals = await tokenContract.decimals();
+      const poolContract = new ethers.Contract(
+        poolAddress!,
+        crossChainPoolAbi,
+        signer
+      );
+
+      const amountToPass = ethers.utils.parseUnits(
+        amount,
+        parseInt(tokenDecimals.toString())
+      );
+      console.log(amountToPass);
+
+      console.log(address);
+
+      const ccipFees = await poolContract.getCcipFeesForBridging(
+        amountToPass,
+        address!,
+        {
+          gasLimit: 10000000,
+        }
+      );
+
+      const approval = await tokenContract.approve(
+        poolAddress!,
+        ethers.constants.MaxUint256,
+        {
+          gasLimit: 10000000,
+        }
+      );
+
+      await approval.wait(1);
+
+      const txn = await poolContract.bridge(amountToPass, address!, {
+        gasLimit: 10000000,
+        value: ccipFees,
+      });
+
+      await txn.wait(1);
+      setIsBridgeSuccess(true);
+      setIsLoading(false);
     }
   };
 
