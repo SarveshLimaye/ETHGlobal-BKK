@@ -95,6 +95,8 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 
 export const CARDONA_CHAIN_ID = 2442;
 
+export const ARBITUM_SEPOLIA_CHAIN_ID = 421614;
+
 export const NATIVE_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
 export const UNIFIED_BRIDGE = "0x528e26b25a34a4a5d0dbda1d57d318153d2ed582";
@@ -118,5 +120,13 @@ export const checkIfPolygonAggLayer = (
     return true;
   } else {
     return false;
+  }
+};
+
+export const getPoolAddress = (srcChainId: number) => {
+  if (srcChainId === SEPOLIA_CHAIN_ID) {
+    return "0x29277F9207Ff093c206292c28406Ee51e1605166";
+  } else if (srcChainId === ARBITUM_SEPOLIA_CHAIN_ID) {
+    return "0xD255FBb48513e92c7D7e2a16769dDDE92d8698E6";
   }
 };
