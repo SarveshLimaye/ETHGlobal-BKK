@@ -9,6 +9,8 @@ import {IRouterClient} from "ccip/contracts/ccip/interfaces/IRouterClient.sol";
 import {AggregatorV3Interface} from "ccip/contracts/shared/interfaces/AggregatorV3Interface.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import { IEntropyConsumer } from "@pythnetwork/entropy-sdk-solidity/IEntropyConsumer.sol";
+import { IEntropy } from "@pythnetwork/entropy-sdk-solidity/IEntropy.sol";
 // import {VRFV2PlusWrapperConsumerBase} from "@chainlink/contracts/vrf/dev/VRFV2PlusWrapperConsumerBase.sol";
 // import {VRFV2PlusClient} from "@chainlink/contracts/vrf/dev/libraries/VRFV2PlusClient.sol";
 
@@ -28,7 +30,7 @@ import {Register} from "./Register.sol";
  *  deployer need to sen feetoken to this contract beforehand
  */
 
-contract PoolFactory is Ownable, CCIPReceiver, Register {
+contract PoolFactory is Ownable, CCIPReceiver, Register,IEntropyConsumer {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
@@ -50,10 +52,17 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
     uint64 private constant DEPLOY_POOL_FUNCTION_ID = 1;
     uint64 private immutable i_chainSelectorCurrentChain;
     uint256 private s_nonce;
+    IEntropy public s_entropy;
+    uint256 public s_randomPyth;
     mapping(uint64 => address[]) private s_deployedPoolsOnOtherChains; //  maps chain selector to pool array
     mapping(address => bytes32) public s_addressToFeedId;
     address[] private s_allDeployedPoolsInCurrentChain; //  maps chain selector to pool array
     IPyth public s_pyth;
+    struct pythVariables {
+        address entropyProvider;
+        uint256 fee;
+    }
+    pythVariables internal s_pythVariables;
     // AggregatorV3Interface private s_priceFeed;
 
     /*//////////////////////////////////////////////////////////////
@@ -80,13 +89,14 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
                                  FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _ccipRouter, address _feeToken, uint64 _chainSelector, address _pythContract)
+    constructor(address _ccipRouter, address _feeToken, uint64 _chainSelector, address _pythContract,address _entropyAddress)
         CCIPReceiver(_ccipRouter)
         Ownable(msg.sender)
     {
         i_feeToken = _feeToken;
         i_chainSelectorCurrentChain = _chainSelector;
         s_pyth = IPyth(_pythContract);
+        s_entropy = IEntropy(_entropyAddress);
     }
 
     function getPythPrice (bytes[] calldata priceUpdate,address token) public payable returns(int64 priceUint, int32 expo) {
@@ -118,22 +128,29 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
         address _underlyingTokenOnDestinationChain,
         uint256 _destinationChainId,
         string memory _poolName
-    ) external returns (address) {
+    ) external payable returns (address) {
         NetworkDetails memory destinationConfig = s_networkDetails[_destinationChainId];
-        uint256 salt = s_nonce + 1; // todo use vrf to generate a random salt
-        s_nonce += 1;
+        s_pythVariables.entropyProvider = s_entropy.getDefaultProvider();
+        s_pythVariables.fee = s_entropy.getFee(s_pythVariables.entropyProvider);
+        s_entropy.requestWithCallback{ value: s_pythVariables.fee }(
+            s_pythVariables.entropyProvider,
+            0x00
+        );
+        // uint256 salt = s_nonce + 1; // todo use vrf to generate a random salt
+        // s_nonce += 1;
 
         address deployedPool = _deployPoolCreate2(
             _underlyingTokenOnSourceChain,
             _poolName,
             destinationConfig.chainSelector,
             _underlyingTokenOnDestinationChain,
-            salt
+            s_randomPyth
         );
 
         address receiverFactory = _receiverFactory;
+
         address destinationPoolComputedAddress = _computeAddress(
-            salt,
+            s_randomPyth,
             _underlyingTokenOnDestinationChain,
             _poolName,
             i_chainSelectorCurrentChain,
@@ -141,11 +158,10 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
             _underlyingTokenOnSourceChain,
             receiverFactory
         );
-
         CrossChainPool(deployedPool).addCrossChainSender(destinationPoolComputedAddress);
 
         s_deployedPoolsOnOtherChains[destinationConfig.chainSelector].push(destinationPoolComputedAddress);
-
+       
         _sendCCipMessageDeploy(
             _receiverFactory,
             destinationConfig.chainSelector,
@@ -153,7 +169,7 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
             _poolName,
             deployedPool,
             _underlyingTokenOnSourceChain,
-            salt
+            s_randomPyth
         );
         // _requestRandomWords();
         return deployedPool;
@@ -182,6 +198,30 @@ contract PoolFactory is Ownable, CCIPReceiver, Register {
     /*//////////////////////////////////////////////////////////////
                         INTERNAL / PRIVATE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * 
+     * @param sequenceNumber - the sequence number of the request
+     * @param provider  - the address of the provider
+     * @param randomNumber - the random number generated
+     */
+    function entropyCallback(
+        uint64 sequenceNumber,
+        address provider,
+        bytes32 randomNumber
+    ) internal override {
+        // Implement your callback logic here.
+        s_randomPyth = uint256(randomNumber);
+    }
+
+    /**
+     * @notice returns the address of the entropy contract
+     */
+
+    function getEntropy() internal view override returns (address) {
+        return address(s_entropy);
+    }
+
 
     /**
      * @notice deploy pool on the current chain using create2
