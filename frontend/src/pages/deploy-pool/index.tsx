@@ -12,72 +12,15 @@ import {
 } from "@/components/UI/Select/Select";
 import { Input } from "@/components/UI/Input/Input";
 import { ethers } from "ethers";
+import entropyAbi from "@/utils/abis/entropyAbi.json";
 
 // Assuming these imports are available in your project
 import poolfactoryAbi from "@/utils/abis/poolfactoryAbi.json";
-
-const chains = [
-  {
-    id: 11155111,
-    name: "Ethereum Sepolia",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=025",
-    factoryAddress: "0x86552b6aaf1D7f0ffFc7cEe029A501e4883308bC",
-    tokens: [
-      {
-        symbol: "LINK",
-        name: "Chainlink",
-        address: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
-        logo: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=025",
-      },
-      {
-        symbol: "USDC",
-        name: "USD Coin",
-        address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=025",
-      },
-    ],
-  },
-  {
-    id: 80001,
-    name: "Polygon Amoy",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=025",
-    factoryAddress: "0xReceiverFactory1",
-    tokens: [
-      {
-        symbol: "LINK",
-        name: "Chainlink",
-        address: "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904",
-        logo: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=025",
-      },
-      {
-        symbol: "USDC",
-        name: "USD Coin",
-        address: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97",
-        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=025",
-      },
-    ],
-  },
-  {
-    id: 421614,
-    name: "Arbitrum Sepolia",
-    logo: "https://cryptologos.cc/logos/arbitrum-arb-logo.svg?v=025",
-    factoryAddress: "0x7E33E711612Af4c4522d89C8F88f7eA9E925a5D3",
-    tokens: [
-      {
-        symbol: "LINK",
-        name: "Chainlink",
-        address: "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E",
-        logo: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=025",
-      },
-      {
-        symbol: "USDC",
-        name: "USD Coin",
-        address: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
-        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg?v=025",
-      },
-    ],
-  },
-];
+import {
+  BASE_SEPOLIA_CHAIN_ID,
+  chains,
+  OPTIMISM_SEPOLIA_CHAIN_ID,
+} from "@/utils/helper";
 
 export default function DeployPool() {
   const [poolName, setPoolName] = useState("");
@@ -88,6 +31,7 @@ export default function DeployPool() {
     destToken: "",
     factoryAddress: "",
   });
+  const [isPoolDeployed, setIsPoolDeployed] = useState(false);
 
   const handleChainSelect = (chainId: string, isSource: boolean) => {
     const selectedChain = chains.find((c) => c.id.toString() === chainId);
@@ -157,16 +101,57 @@ export default function DeployPool() {
       console.log("Destination", destChainObject);
       console.log(formData, "formData");
 
-      const tx = await contract.deployCCPoolsCreate2(
-        destChainObject?.factoryAddress!,
-        formData.sourceToken,
-        formData.destToken,
-        formData.destChainId,
-        poolName,
-        {
-          gasLimit: 3000000,
-        }
-      );
+      if (
+        (srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID &&
+          destChainObject?.id === BASE_SEPOLIA_CHAIN_ID) ||
+        (srcChainObject?.id === BASE_SEPOLIA_CHAIN_ID &&
+          destChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID)
+      ) {
+        const entropyAddress =
+          srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID
+            ? "0x4821932D0CDd71225A6d914706A621e0389D7061"
+            : "0x41c9e39574F40Ad34c79f1C99B66A45eFB830d4c";
+
+        const entropyContract = new ethers.Contract(
+          entropyAddress,
+          entropyAbi,
+          signer
+        );
+
+        const entropyProvider = await entropyContract.getDefaultProvider();
+        const fees = await entropyContract.getFee(entropyProvider);
+
+        console.log("Fees", fees);
+        const tx = await contract.deployCCPoolsCreate2(
+          destChainObject?.factoryAddress!,
+          formData.sourceToken,
+          formData.destToken,
+          formData.destChainId,
+          poolName,
+          {
+            gasLimit: 3000000,
+            value: BigInt(fees),
+          }
+        );
+
+        await tx.wait(1);
+        setIsPoolDeployed(true);
+      } else {
+        const tx = await contract.deployCCPoolsCreate2(
+          destChainObject?.factoryAddress!,
+          formData.sourceToken,
+          formData.destToken,
+          formData.destChainId,
+          poolName,
+          {
+            gasLimit: 3000000,
+          }
+        );
+
+        await tx.wait(1);
+
+        setIsPoolDeployed(true);
+      }
 
       // Uncomment these lines if you want to wait for the transaction to be mined
       // const receipt = await tx.wait()
@@ -347,7 +332,11 @@ export default function DeployPool() {
                      flex items-center justify-center"
             onClick={deployCrossChainPool}
           >
-            <span>Deploy Cross-Chain Pools</span>
+            {isPoolDeployed ? (
+              <span>Pool Deployed Successfully. Wait for 10-15 mins</span>
+            ) : (
+              <span>Deploy Pool</span>
+            )}
             <ChevronRight className="w-6 h-6 ml-2" />
           </button>
         </form>
