@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ConnectKitButton } from "connectkit";
+import Link from "next/link";
 
 const Navbar = () => {
   return (
@@ -33,20 +34,23 @@ const Navbar = () => {
               <Globe2 className="h-6 w-6 text-primary animate-float" />
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            <Link
+              href="/"
+              className="text-4xl font-bold bg-white from-primary to-primary/80 bg-clip-text text-transparent"
+            >
               CrossChainPort
-            </span>
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
             <HoverCard>
               <HoverCardTrigger>
-                <a
-                  href="#"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                <Link
+                  href="/port"
+                  className="text-l font-medium hover:text-primary transition-colors"
                 >
                   Port
-                </a>
+                </Link>
               </HoverCardTrigger>
               <HoverCardContent>
                 Transfer tokens across chains seamlessly
@@ -54,12 +58,12 @@ const Navbar = () => {
             </HoverCard>
             <HoverCard>
               <HoverCardTrigger>
-                <a
-                  href="#"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                <Link
+                  href="/deploy-pool"
+                  className="text-l font-medium hover:text-primary transition-colors"
                 >
-                  Pools
-                </a>
+                  Deploy Pool
+                </Link>
               </HoverCardTrigger>
               <HoverCardContent>
                 Explore and manage liquidity pools
@@ -69,7 +73,7 @@ const Navbar = () => {
               <HoverCardTrigger>
                 <a
                   href="#"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  className="text-l font-medium hover:text-primary transition-colors"
                 >
                   Analytics
                 </a>
