@@ -3,10 +3,18 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Loader2, Droplets } from "lucide-react";
+import { ChevronDown, Loader2, Droplets, X, Factory } from "lucide-react";
 import { Button } from "@/components/UI/Button";
 import { ethers } from "ethers";
 import poolfactoryAbi from "@/utils/abis/poolfactoryAbi.json";
+import crossChainPoolAbi from "@/utils/abis/crossChainPoolAbi.json";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/UI/dialog";
+import { Input } from "@/components/UI/Input/Input";
 
 import {
   Card,
@@ -21,6 +29,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/UI/collapsible";
 import { chains } from "@/utils/helper";
+import { get } from "http";
+import { Toast } from "@/components/UI/Toast";
 
 const RPC_URLS = {
   11155111: [
@@ -43,6 +53,100 @@ const RPC_URLS = {
     "https://optimism-sepolia.blockpi.network/v1/rpc/public",
     "https://optimism-sepolia.g.alchemy.com/v2/bg__eluDFhIa87eN1uuyYt0EPKNMljIe",
   ],
+};
+
+const LiquidityModal = ({ isOpen, onClose, poolAddress, chainName }) => {
+  const [amount, setAmount] = useState("");
+  const [tokenAddress, setTokenAddress] = useState("");
+
+  const getUnderlyingTokenAddress = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    console.log("Pool Address:", poolAddress);
+    const contract = new ethers.Contract(
+      poolAddress,
+      crossChainPoolAbi,
+      signer
+    );
+
+    const fees = await contract.getCCipFeesForDeposit(amount);
+
+    const token = await contract.getUnderlyingToken();
+
+    setTokenAddress(token);
+
+    console.log("Underlying Token Address:", token);
+    const erc20abi = [
+      "function approve(address spender, uint256 amount) external returns (bool)",
+    ];
+    const tokenContract = new ethers.Contract(token, erc20abi, signer);
+
+    const approve = await tokenContract.approve(
+      poolAddress,
+      ethers.constants.MaxUint256
+    );
+
+    await approve.wait(1);
+
+    const tx = await contract.addLiquidity(token, amount, {
+      value: fees,
+      gasLimit: 300000,
+    });
+
+    await tx.wait(1);
+  };
+
+  const handleConfirmTransfer = () => {
+    console.log("Pool Address:", poolAddress);
+    console.log("Amount to supply:", amount);
+
+    getUnderlyingTokenAddress();
+
+    setAmount("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-gray-800 border border-gray-700 text-white sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-center">
+            Supply Liquidity to {chainName}
+          </DialogTitle>
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">
+              Amount to Supply
+            </label>
+            <Input
+              type="number"
+              placeholder="Enter amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="text-sm text-gray-400 break-all">
+            Pool Address: {poolAddress}
+          </div>
+          <Button
+            onClick={handleConfirmTransfer}
+            disabled={!amount}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Confirm Transfer
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 const getFactoryAddresses = () => {
@@ -79,7 +183,9 @@ export default function Pools() {
   const [poolsByChain, setPoolsByChain] = useState({});
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
-  const [openChains, setOpenChains] = useState<number[]>([]);
+  const [openChains, setOpenChains] = useState([]);
+  const [selectedPool, setSelectedPool] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getPoolsForChain = async (factory) => {
     try {
@@ -135,7 +241,7 @@ export default function Pools() {
     getAllPools();
   }, []);
 
-  const toggleChain = (chainId: number) => {
+  const toggleChain = (chainId) => {
     setOpenChains((prev) =>
       prev.includes(chainId)
         ? prev.filter((id) => id !== chainId)
@@ -217,7 +323,13 @@ export default function Pools() {
                       Chain ID: {pool.chainId}
                     </span>
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 ease-in-out transform hover:scale-105">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 ease-in-out transform hover:scale-105"
+                    onClick={() => {
+                      setSelectedPool(pool);
+                      setIsModalOpen(true);
+                    }}
+                  >
                     <Droplets className="mr-2 h-4 w-4" />
                     Supply Liquidity
                   </Button>
@@ -289,6 +401,18 @@ export default function Pools() {
           <div className="flex justify-center items-center min-h-[200px]">
             <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
           </div>
+        )}
+
+        {selectedPool && (
+          <LiquidityModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedPool(null);
+            }}
+            poolAddress={selectedPool.poolAddress}
+            chainName={selectedPool.chainName}
+          />
         )}
       </div>
     </div>
