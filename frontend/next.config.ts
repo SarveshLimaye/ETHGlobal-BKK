@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   images: {
-    domains: ["cryptologos.cc"],
+    domains: ["cryptologos.cc", "i.seadn.io"],
     dangerouslyAllowSVG: true, // Add your image host domain here
   },
 };

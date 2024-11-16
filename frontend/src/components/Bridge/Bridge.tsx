@@ -137,8 +137,6 @@ export default function Bridge() {
       );
       console.log(amountToPass);
 
-      console.log(address);
-
       const ccipFees = await poolContract.getCcipFeesForBridging(
         amountToPass,
         address!,

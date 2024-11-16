@@ -89,6 +89,35 @@ export const chains = [
       },
     ],
   },
+  {
+    id: 84532,
+    name: "Base Sepolia",
+    logo: "https://i.seadn.io/gcs/files/f75d772fba8058dbbbefbc0578bae807.png?auto=format&dpr=1&w=384",
+    factoryAddress: "0x275fC6E5b9BCE1b756EacA955b7758070099e07d",
+    tokens: [
+      {
+        symbol: "LINK",
+        name: "Chainlink",
+        address: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+        logo: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=025",
+      },
+    ],
+  },
+
+  {
+    id: 11155420,
+    name: "Optimism Sepolia",
+    logo: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png?v=025",
+    factoryAddress: "0xfa24eaD3De76045f875998dd1d75562057cEB26d",
+    tokens: [
+      {
+        symbol: "LINK",
+        name: "Chainlink",
+        address: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+        logo: "https://cryptologos.cc/logos/chainlink-link-logo.svg?v=025",
+      },
+    ],
+  },
 ];
 
 export const SEPOLIA_CHAIN_ID = 11155111;
@@ -96,6 +125,10 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 export const CARDONA_CHAIN_ID = 2442;
 
 export const ARBITUM_SEPOLIA_CHAIN_ID = 421614;
+
+export const OPTIMISM_SEPOLIA_CHAIN_ID = 11155420;
+
+export const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 export const NATIVE_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
@@ -128,5 +161,9 @@ export const getPoolAddress = (srcChainId: number) => {
     return "0x29277F9207Ff093c206292c28406Ee51e1605166";
   } else if (srcChainId === ARBITUM_SEPOLIA_CHAIN_ID) {
     return "0xD255FBb48513e92c7D7e2a16769dDDE92d8698E6";
+  } else if (srcChainId === BASE_SEPOLIA_CHAIN_ID) {
+    return "0x0ffb63091d69A3c050FA5A788A68cff304F76ae6";
+  } else if (srcChainId === OPTIMISM_SEPOLIA_CHAIN_ID) {
+    return "0xDAd3276564bEC357300F3cD7B852015ADc278A42";
   }
 };
