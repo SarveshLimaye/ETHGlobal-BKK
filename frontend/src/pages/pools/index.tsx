@@ -34,6 +34,15 @@ const RPC_URLS = {
     "https://arb-sepolia.g.alchemy.com/v2/bg__eluDFhIa87eN1uuyYt0EPKNMljIe",
     "https://sepolia-rollup.arbitrum.io/rpc",
   ],
+  84532: [
+    process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL,
+    "https://base-sepolia.blockpi.network/v1/rpc/public",
+  ],
+  11155420: [
+    process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL,
+    "https://optimism-sepolia.blockpi.network/v1/rpc/public",
+    "https://optimism-sepolia.g.alchemy.com/v2/bg__eluDFhIa87eN1uuyYt0EPKNMljIe",
+  ],
 };
 
 const getFactoryAddresses = () => {
