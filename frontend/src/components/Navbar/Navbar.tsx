@@ -44,40 +44,31 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-6">
             <HoverCard>
-              <HoverCardTrigger>
-                <Link
-                  href="/port"
-                  className="text-l font-medium hover:text-primary transition-colors"
-                >
-                  Port
-                </Link>
-              </HoverCardTrigger>
-              <HoverCardContent>
-                Transfer tokens across chains seamlessly
-              </HoverCardContent>
+              <Link
+                href="/port"
+                className="text-l font-large hover:text-primary transition-colors"
+              >
+                Port
+              </Link>
             </HoverCard>
             <HoverCard>
               <HoverCardTrigger>
                 <Link
                   href="/deploy-pool"
-                  className="text-l font-medium hover:text-primary transition-colors"
+                  className="text-l font-large hover:text-primary transition-colors"
                 >
                   Deploy Pool
                 </Link>
               </HoverCardTrigger>
-              <HoverCardContent>
-                Explore and manage liquidity pools
-              </HoverCardContent>
             </HoverCard>
             <HoverCard>
-              <HoverCardTrigger>
-                <a
-                  href="#"
-                  className="text-l font-medium hover:text-primary transition-colors"
-                >
-                  Analytics
-                </a>
-              </HoverCardTrigger>
+              <Link
+                href="/pools"
+                className="text-l font-large hover:text-primary transition-colors"
+              >
+                Pools
+              </Link>
+
               <HoverCardContent>
                 Deep insights into cross-chain activities
               </HoverCardContent>
