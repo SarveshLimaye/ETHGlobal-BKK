@@ -13,3 +13,6 @@
 [submodule "contracts/lib/ccip"]
 	path = contracts/lib/ccip
 	url = https://github.com/smartcontractkit/ccip
+[submodule "contracts/lib/pyth-crosschain"]
+	path = contracts/lib/pyth-crosschain
+	url = https://github.com/pyth-network/pyth-crosschain

@@ -113,6 +113,15 @@ contract Register {
             ccipBnMAddress: 0xA189971a2c5AcA0DFC5Ee7a2C44a2Ae27b3CF389,
             ccipLnMAddress: 0x30DeCD269277b8094c00B0bacC3aCaF3fF4Da7fB
         });
+        //Linea Sepolia
+         s_networkDetails[59141] = NetworkDetails({
+            chainSelector: 5719461335882077547,
+            routerAddress: 0xB4431A6c63F72916151fEA2864DBB13b8ce80E8a,
+            linkAddress: 0xF64E6E064a71B45514691D397ad4204972cD6508,
+            wrappedNativeAddress: 0x06565ed324Ee9fb4DB0FF80B7eDbE4Cb007555a3,
+            ccipBnMAddress: 0x45A6F9a98932D03d34d50c42568D79023fE13fa6,
+            ccipLnMAddress: 0xA7EA79b9E466e8D2a440128867ed399bC78f4aaE
+        });
     }
 
     function getNetworkDetails(uint256 chainId) external view returns (NetworkDetails memory) {

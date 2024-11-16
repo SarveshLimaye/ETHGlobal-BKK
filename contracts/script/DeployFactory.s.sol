@@ -15,16 +15,15 @@ contract DeployPoolFactory is Script {
     address public priceFeed;
     address public vrfWrapper;
 
- 
-
     function run() public returns (PoolFactory) {
-
         vm.stopPrank();
         vm.startBroadcast(msg.sender);
-        //For arbium sepolia chain. Change for other chains
-        address pythAddress = 0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF;
+        //For optimism sepolia chain. Change for other chains
+        address pythAddress = 0x0708325268dF9F66270F1401206434524814508b;
+        address pythEntropy = 0x4821932D0CDd71225A6d914706A621e0389D7061;
+
         PoolFactory poolFactory =
-            new PoolFactory(activeConfig.routerAddress, activeConfig.linkAddress, activeConfig.chainSelector, pythAddress);
+            new PoolFactory(activeConfig.routerAddress, activeConfig.linkAddress, activeConfig.chainSelector, pythAddress,pythEntropy);
 
         IERC20(activeConfig.linkAddress).approve(address(poolFactory), FEE_TOKEN_DEPOSIT_AMOUNT);
         poolFactory.depositFeeToken(FEE_TOKEN_DEPOSIT_AMOUNT);

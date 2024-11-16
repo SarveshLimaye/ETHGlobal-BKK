@@ -8,8 +8,8 @@ remappings = [
     'forge-std/=lib/forge-std/src/',
     'ccip/contracts/=lib/ccip/contracts/src/v0.8/',
     '@chainlink/local/=lib/chainlink-local/',
-    '@pythnetwork/pyth-sdk-solidity=lib/pyth-sdk-solidity'
-
+    '@pythnetwork/pyth-sdk-solidity=lib/pyth-sdk-solidity',  
+    '@pythnetwork/entropy-sdk-solidity/=node_modules/@pythnetwork/entropy-sdk-solidity'
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
