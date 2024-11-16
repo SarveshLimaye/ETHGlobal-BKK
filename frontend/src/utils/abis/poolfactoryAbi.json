@@ -21,8 +21,36 @@
                 "name": "_pythContract",
                 "type": "address",
                 "internalType": "address"
+            },
+            {
+                "name": "_entropyAddress",
+                "type": "address",
+                "internalType": "address"
             }
         ],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "_entropyCallback",
+        "inputs": [
+            {
+                "name": "sequence",
+                "type": "uint64",
+                "internalType": "uint64"
+            },
+            {
+                "name": "provider",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "randomNumber",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            }
+        ],
+        "outputs": [],
         "stateMutability": "nonpayable"
     },
     {
@@ -114,7 +142,7 @@
                 "internalType": "address"
             }
         ],
-        "stateMutability": "nonpayable"
+        "stateMutability": "payable"
     },
     {
         "type": "function",
@@ -352,6 +380,19 @@
     },
     {
         "type": "function",
+        "name": "s_entropy",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract IEntropy"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
         "name": "s_pyth",
         "inputs": [],
         "outputs": [
@@ -359,6 +400,19 @@
                 "name": "",
                 "type": "address",
                 "internalType": "contract IPyth"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "s_randomPyth",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
             }
         ],
         "stateMutability": "view"
