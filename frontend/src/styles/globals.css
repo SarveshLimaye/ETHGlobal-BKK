@@ -58,6 +58,7 @@
     --ock-line-default: "your-custom-value";
     --ock-line-heavy: "your-custom-value";
     --ock-line-inverse: "your-custom-value";
+    --radius: 0.5rem;
   }
 }
 
