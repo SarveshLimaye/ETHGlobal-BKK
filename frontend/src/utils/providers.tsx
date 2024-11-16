@@ -9,6 +9,8 @@ import {
   arbitrumSepolia,
   scrollSepolia,
   lineaSepolia,
+  baseSepolia,
+  optimismSepolia,
 } from "wagmi/chains";
 import { type ReactNode, useState } from "react";
 import { type State, WagmiProvider, createConfig, http } from "wagmi";
@@ -25,6 +27,8 @@ const connectkitConfig: any = createConfig(
       arbitrumSepolia,
       scrollSepolia,
       lineaSepolia,
+      baseSepolia,
+      optimismSepolia,
     ],
     transports: {
       [sepolia.id]: http(
@@ -44,6 +48,12 @@ const connectkitConfig: any = createConfig(
       ),
       [lineaSepolia.id]: http(
         `https://linea-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
+      ),
+      [baseSepolia.id]: http(
+        `https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
+      ),
+      [optimismSepolia.id]: http(
+        `https://optimism-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
       ),
     },
 
