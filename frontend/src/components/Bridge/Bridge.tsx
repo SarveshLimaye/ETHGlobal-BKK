@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/UI/Button";
 import unifiedBridge from "../../utils/abis/unifiedBridge.json";
 import crossChainPoolAbi from "../../utils/abis/crossChainPoolAbi.json";
@@ -16,6 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/UI/Card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/UI/dialog";
 import { Input } from "@/components/UI/input";
 import { Label } from "@/components/UI/label";
 import {
@@ -42,6 +48,8 @@ export default function Bridge() {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isBridgeSuccess, setIsBridgeSuccess] = useState(false);
+  const [showTxModal, setShowTxModal] = useState(false);
+  const [txHash, setTxHash] = useState("");
   const { address } = useAccount();
 
   useEffect(() => {
@@ -99,7 +107,8 @@ export default function Bridge() {
       );
 
       await txn.wait(1);
-
+      setTxHash(txn.hash);
+      setShowTxModal(true);
       setIsLoading(false);
       setIsBridgeSuccess(true);
     } else {
@@ -161,6 +170,8 @@ export default function Bridge() {
       });
 
       await txn.wait(1);
+      setTxHash(txn.hash);
+      setShowTxModal(true);
       setIsBridgeSuccess(true);
       setIsLoading(false);
     }
@@ -176,6 +187,30 @@ export default function Bridge() {
 
   return (
     <Card className="w-full max-w-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg border border-gray-700">
+      <Dialog open={showTxModal} onOpenChange={setShowTxModal}>
+        <DialogContent className="bg-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Transaction Submitted</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-300">Transaction Hash:</p>
+            <div className="p-3 bg-gray-700 rounded-lg break-all font-mono text-sm">
+              {txHash}
+            </div>
+            <a
+              href={`https://eth-sepolia.blockscout.com/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              View on Blockscout <ExternalLink className="w-4 h-4" />
+            </a>
+            <p className="text-sm text-gray-400">
+              Please wait 5-10 minutes for the pools to be fully deployed
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
       <CardHeader className="space-y-1 bg-gray-800">
         <CardTitle className="text-2xl font-bold text-center text-gray-100">
           Cross-Chain Bridge

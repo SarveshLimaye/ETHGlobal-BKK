@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ArrowLeftRight } from "lucide-react";
+import { ChevronRight, ArrowLeftRight, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/UI/Card";
 import {
   Select,
@@ -11,16 +11,21 @@ import {
   SelectValue,
 } from "@/components/UI/Select/Select";
 import { Input } from "@/components/UI/Input/Input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/UI/dialog";
 import { ethers } from "ethers";
 import entropyAbi from "@/utils/abis/entropyAbi.json";
-
-// Assuming these imports are available in your project
 import poolfactoryAbi from "@/utils/abis/poolfactoryAbi.json";
 import {
   BASE_SEPOLIA_CHAIN_ID,
   chains,
   OPTIMISM_SEPOLIA_CHAIN_ID,
 } from "@/utils/helper";
+import { http } from "viem";
 
 export default function DeployPool() {
   const [poolName, setPoolName] = useState("");
@@ -32,6 +37,14 @@ export default function DeployPool() {
     factoryAddress: "",
   });
   const [isPoolDeployed, setIsPoolDeployed] = useState(false);
+  const [showTxModal, setShowTxModal] = useState(false);
+  const [txHash, setTxHash] = useState("");
+
+  const getBlockscoutUrl = (chainId: string) => {
+    const chain = chains.find((c) => c.id.toString() === chainId);
+    if (!chain?.blockscoutUrl) return "";
+    return;
+  };
 
   const handleChainSelect = (chainId: string, isSource: boolean) => {
     const selectedChain = chains.find((c) => c.id.toString() === chainId);
@@ -80,87 +93,105 @@ export default function DeployPool() {
 
   const deployCrossChainPool = async () => {
     if (window.ethereum && window.ethereum._state.accounts.length !== 0) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      console.log(signer);
-      console.log(window.ethereum._state.accounts.length);
-      const srcChainObject = chains.find(
-        (chain) => chain.id === parseInt(formData.sourceChainId)
-      );
-      const destChainObject = chains.find(
-        (chain) => chain.id === parseInt(formData.destChainId)
-      );
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
-      const contract = new ethers.Contract(
-        srcChainObject?.factoryAddress!,
-        poolfactoryAbi,
-        signer
-      );
+        const srcChainObject = chains.find(
+          (chain) => chain.id === parseInt(formData.sourceChainId)
+        );
+        const destChainObject = chains.find(
+          (chain) => chain.id === parseInt(formData.destChainId)
+        );
 
-      console.log("Source", srcChainObject);
-      console.log("Destination", destChainObject);
-      console.log(formData, "formData");
-
-      if (
-        (srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID &&
-          destChainObject?.id === BASE_SEPOLIA_CHAIN_ID) ||
-        (srcChainObject?.id === BASE_SEPOLIA_CHAIN_ID &&
-          destChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID)
-      ) {
-        const entropyAddress =
-          srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID
-            ? "0x4821932D0CDd71225A6d914706A621e0389D7061"
-            : "0x41c9e39574F40Ad34c79f1C99B66A45eFB830d4c";
-
-        const entropyContract = new ethers.Contract(
-          entropyAddress,
-          entropyAbi,
+        const contract = new ethers.Contract(
+          srcChainObject?.factoryAddress!,
+          poolfactoryAbi,
           signer
         );
 
-        const entropyProvider = await entropyContract.getDefaultProvider();
-        const fees = await entropyContract.getFee(entropyProvider);
+        let tx;
+        if (
+          (srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID &&
+            destChainObject?.id === BASE_SEPOLIA_CHAIN_ID) ||
+          (srcChainObject?.id === BASE_SEPOLIA_CHAIN_ID &&
+            destChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID)
+        ) {
+          const entropyAddress =
+            srcChainObject?.id === OPTIMISM_SEPOLIA_CHAIN_ID
+              ? "0x4821932D0CDd71225A6d914706A621e0389D7061"
+              : "0x41c9e39574F40Ad34c79f1C99B66A45eFB830d4c";
 
-        console.log("Fees", fees);
-        const tx = await contract.deployCCPoolsCreate2(
-          destChainObject?.factoryAddress!,
-          formData.sourceToken,
-          formData.destToken,
-          formData.destChainId,
-          poolName,
-          {
-            gasLimit: 3000000,
-            value: BigInt(fees),
-          }
-        );
+          const entropyContract = new ethers.Contract(
+            entropyAddress,
+            entropyAbi,
+            signer
+          );
+
+          const entropyProvider = await entropyContract.getDefaultProvider();
+          const fees = await entropyContract.getFee(entropyProvider);
+
+          tx = await contract.deployCCPoolsCreate2(
+            destChainObject?.factoryAddress!,
+            formData.sourceToken,
+            formData.destToken,
+            formData.destChainId,
+            poolName,
+            {
+              gasLimit: 3000000,
+              value: BigInt(fees),
+            }
+          );
+        } else {
+          tx = await contract.deployCCPoolsCreate2(
+            destChainObject?.factoryAddress!,
+            formData.sourceToken,
+            formData.destToken,
+            formData.destChainId,
+            poolName,
+            {
+              gasLimit: 3000000,
+            }
+          );
+        }
+
+        setTxHash(tx.hash);
+        setShowTxModal(true);
 
         await tx.wait(1);
         setIsPoolDeployed(true);
-      } else {
-        const tx = await contract.deployCCPoolsCreate2(
-          destChainObject?.factoryAddress!,
-          formData.sourceToken,
-          formData.destToken,
-          formData.destChainId,
-          poolName,
-          {
-            gasLimit: 3000000,
-          }
-        );
-
-        await tx.wait(1);
-
-        setIsPoolDeployed(true);
+      } catch (error) {
+        console.error("Transaction failed:", error);
       }
-
-      // Uncomment these lines if you want to wait for the transaction to be mined
-      // const receipt = await tx.wait()
-      // const deployedPoolAddress = receipt.events[0].args.deployedPool
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-900">
+      <Dialog open={showTxModal} onOpenChange={setShowTxModal}>
+        <DialogContent className="bg-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Transaction Submitted</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-300">Transaction Hash:</p>
+            <div className="p-3 bg-gray-700 rounded-lg break-all font-mono text-sm">
+              {txHash}
+            </div>
+            <a
+              href={`https://eth-sepolia.blockscout.com/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              View on Blockscout <ExternalLink className="w-4 h-4" />
+            </a>
+            <p className="text-sm text-gray-400">
+              Please wait 5-10 minutes for the pools to be fully deployed
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
       <div className="w-full max-w-4xl p-6 space-y-8 text-gray-100 bg-gray-800 rounded-lg">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-blue-400">
