@@ -98,9 +98,9 @@ const Hero = () => {
               <Workflow className="h-5 w-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
               Start Porting
             </Button>
-            <Button size="lg" variant="outline" className="group">
+            <Button size="lg" variant="outline" className="group text-black">
               Explore Chains
-              <Boxes className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
+              <Boxes className="h-5 w-5 ml-2 text-black group-hover:translate-x-2 transition-transform duration-300" />
             </Button>
           </div>
         </div>

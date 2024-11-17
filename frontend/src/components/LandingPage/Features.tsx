@@ -49,12 +49,12 @@ const Features = () => {
   ];
 
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section className="relative py-24 overflow-hidden text-white">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-grid-white/[0.02] bg-grid-primary/5" />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/20" />
 
-      <div className="container relative mx-auto px-4">
+      <div className="container relative mx-auto px-4 text-white">
         {/* Section header */}
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -67,11 +67,11 @@ const Features = () => {
         </div>
 
         {/* Feature cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-white">
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="group relative border-primary/10 hover:border-primary/20 transition-all duration-300 backdrop-blur-sm bg-background/50"
+              className="group relative border-primary/10 hover:border-primary/20 transition-all duration-300 backdrop-blur-sm bg-background/50 text-white"
             >
               {/* Card gradient overlay */}
               <div
